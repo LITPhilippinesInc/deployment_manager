@@ -139,6 +139,23 @@ class Email extends Component
     #[Validate(['nullable', 'email'])]
     public ?string $testEmailAddress = null;
 
+    public array $recipientIds = [];
+    public string $recipientMessage = '';
+
+    public function saveRecipients(): void
+    {
+        $this->authorize('update', $this->settings);
+        abort_unless(auth()->user()->isAdminOfTeam($this->team->id) && auth()->user()->currentTeam()->id === $this->team->id, 403);
+        $this->validate(['recipientIds'=>'required|array|min:1','recipientIds.*'=>'integer|distinct']);
+        $ids=$this->team->members()->whereIn('users.id',$this->recipientIds)->get(['users.id','users.email'])->filter(fn($u)=>\App\Services\LitHealthRecipients::eligible($u->email))->pluck('id');
+        abort_unless($ids->count()===count($this->recipientIds),422);
+        \Illuminate\Support\Facades\DB::transaction(function() use($ids) {
+            \Illuminate\Support\Facades\DB::table('lit_notification_recipients')->where('team_id',$this->team->id)->delete();
+            foreach($ids as $id) \Illuminate\Support\Facades\DB::table('lit_notification_recipients')->insert(['team_id'=>$this->team->id,'user_id'=>$id]);
+        });
+        $this->recipientMessage='Recipients saved.';
+    }
+
     public function mount()
     {
         try {
@@ -146,6 +163,7 @@ class Email extends Component
             $this->emails = auth()->user()->email;
             $this->settings = $this->team->emailNotificationSettings;
             $this->authorize('view', $this->settings);
+            $this->recipientIds=\Illuminate\Support\Facades\DB::table('lit_notification_recipients')->where('team_id',$this->team->id)->pluck('user_id')->map(fn($id)=>(string)$id)->all();
             $this->syncData();
             $this->testEmailAddress = auth()->user()->email;
         } catch (\Throwable $e) {
