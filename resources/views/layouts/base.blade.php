@@ -400,7 +400,7 @@
             }
         }
     @endphp
-    <title>{{ $name }}{{ $title ?? 'LIT Deployment Manager' }}</title>
+    <title>{{ $name }}{{ preg_replace('/\bCoolify\b/i', 'LIT Deployment Manager', (string) ($title ?? 'LIT Deployment Manager')) }}</title>
     <link rel="icon" href="{{ asset('lit-brand.svg') }}" type="image/svg+xml" />
     <link rel="manifest" href="{{ asset('site.webmanifest') }}" />
     <meta name="apple-mobile-web-app-title" content="LIT Deployment Manager" />
