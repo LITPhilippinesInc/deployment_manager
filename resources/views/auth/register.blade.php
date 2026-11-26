@@ -1,3 +1,4 @@
+{{-- Modified for LIT Deployment Manager branding. --}}
 <?php
 if (! function_exists('getOldOrLocal')) {
     function getOldOrLocal($key, $localValue)
@@ -11,7 +12,7 @@ $email = getOldOrLocal('email', 'test3@example.com');
 ?>
 
 <x-layout-simple>
-    <x-auth.shell title="Coolify"
+    <x-auth.shell title="LIT Deployment Manager"
         :description="$isFirstUser ? 'Create the root account for this instance.' : 'Create your account to get started.'">
         <div class="flex flex-col gap-4">
             @if ($isRootUserPredefined)
