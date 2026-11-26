@@ -49,6 +49,12 @@ class ServiceHealth extends Component {
         $q=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->where('id',$id);
         $m=(clone $q)->first(); abort_unless($m,404); $q->update(['enabled'=>!$m->enabled,'updated_at'=>now()]);
     }
+    public function toggleEmail(int $id): void {
+        $this->authorizeManage();
+        $q=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->where('id',$id);
+        $m=(clone $q)->first(); abort_unless($m,404);
+        $q->update(['email_enabled'=>!$m->email_enabled,'alert_state'=>null,'updated_at'=>now()]);
+    }
     public function deleteMonitor(int $id): void {
         $this->authorizeManage();
         DB::transaction(function() use($id) {
@@ -62,7 +68,7 @@ class ServiceHealth extends Component {
         abort_unless(auth()->check() && app(\App\Services\Access\AccessResolver::class)->coversWholeTeam(auth()->user(), currentTeam()->id), 403);
         $monitors=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->orderBy('id')->get();
         $items=[];
-        foreach($monitors as $m) $items[]=['name'=>$m->name,'url'=>$m->url,'id'=>$m->id,'type'=>$m->type,'interval'=>$m->interval_minutes,'incidents'=>$m->type==='rss'?DB::table('lit_monitor_incidents')->where('monitor_id',$m->id)->orderByDesc('id')->limit(50)->get():[],'enabled'=>$m->enabled]+$this->history('custom:'.$m->id);
+        foreach($monitors as $m) $items[]=['name'=>$m->name,'url'=>$m->url,'id'=>$m->id,'type'=>$m->type,'interval'=>$m->interval_minutes,'incidents'=>$m->type==='rss'?DB::table('lit_monitor_incidents')->where('monitor_id',$m->id)->orderByDesc('id')->limit(50)->get():[],'enabled'=>$m->enabled,'email_enabled'=>$m->email_enabled]+$this->history('custom:'.$m->id);
         return view('livewire.service-health',['items'=>$items,'canManage'=>auth()->user()?->isAdminOfTeam(currentTeam()->id)]);
     }
     private function history(string $provider): array {
