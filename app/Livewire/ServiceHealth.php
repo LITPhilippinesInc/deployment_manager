@@ -52,7 +52,7 @@ class ServiceHealth extends Component {
     public function render() {
         abort_unless(auth()->check() && app(\App\Services\Access\AccessResolver::class)->coversWholeTeam(auth()->user(), currentTeam()->id), 403);
         $monitors=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->orderBy('id')->get();
-        $items=[['name'=>'Auth0','url'=>'https://status.auth0.com/','id'=>null,'type'=>'http','interval'=>1,'incidents'=>[],'enabled'=>true]+$this->history('Auth0')];
+        $items=[];
         foreach($monitors as $m) $items[]=['name'=>$m->name,'url'=>$m->url,'id'=>$m->id,'type'=>$m->type,'interval'=>$m->interval_minutes,'incidents'=>$m->type==='rss'?DB::table('lit_monitor_incidents')->where('monitor_id',$m->id)->orderByDesc('id')->limit(50)->get():[],'enabled'=>$m->enabled]+$this->history('custom:'.$m->id);
         return view('livewire.service-health',['items'=>$items,'canManage'=>auth()->user()?->isAdminOfTeam(currentTeam()->id)]);
     }
