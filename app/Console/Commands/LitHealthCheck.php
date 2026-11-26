@@ -7,7 +7,6 @@ class LitHealthCheck extends Command {
  protected $signature = 'lit:health-check';
  protected $description = 'Record LIT monitor availability';
  public function handle(): int {
-  $this->check('Auth0','https://status.auth0.com/');
   foreach(DB::table('lit_monitors')->where('enabled',true)->cursor() as $m) {
    $last=DB::table('lit_health_checks')->where('provider','custom:'.$m->id)->max('checked_at');
    if ($last && \Carbon\Carbon::parse($last,'UTC')->gt(now()->utc()->startOfMinute()->subMinutes($m->interval_minutes))) continue;
