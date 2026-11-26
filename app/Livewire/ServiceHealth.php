@@ -3,6 +3,7 @@ namespace App\Livewire;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 class ServiceHealth extends Component {
+    public bool $showMonitorModal = false;
     public string $name = '';
     public string $type = 'http';
     public int $interval = 1;
@@ -10,6 +11,11 @@ class ServiceHealth extends Component {
     public ?int $editing = null;
     private function authorizeManage(): void {
         abort_unless(auth()->user()?->isAdminOfTeam(currentTeam()->id), 403);
+    }
+    public function addMonitor(): void {
+        $this->authorizeManage();
+        $this->cancelEdit();
+        $this->showMonitorModal=true;
     }
     public function saveMonitor(): void {
         $this->authorizeManage();
@@ -27,14 +33,14 @@ class ServiceHealth extends Component {
             if ($q->count()>=10) { $this->addError('name','Maximum 10 monitors per team.'); return; }
             DB::table('lit_monitors')->insert(['team_id'=>currentTeam()->id,'name'=>$this->name,'url'=>$this->url,'type'=>$this->type,'interval_minutes'=>$this->interval,'created_at'=>now(),'updated_at'=>now()]);
         }
-        $this->reset('name','url','editing','type','interval');
+        $this->reset('name','url','editing','type','interval','showMonitorModal');
     }
     public function editMonitor(int $id): void {
         $this->authorizeManage();
         $m=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->where('id',$id)->first(); abort_unless($m,404);
-        $this->editing=$id; $this->name=$m->name; $this->url=$m->url; $this->type=$m->type; $this->interval=$m->interval_minutes;
+        $this->resetValidation(); $this->showMonitorModal=true; $this->editing=$id; $this->name=$m->name; $this->url=$m->url; $this->type=$m->type; $this->interval=$m->interval_minutes;
     }
-    public function cancelEdit(): void { $this->reset('name','url','editing','type','interval'); }
+    public function cancelEdit(): void { $this->resetValidation(); $this->reset('name','url','editing','type','interval'); }
     public function toggleMonitor(int $id): void {
         $this->authorizeManage();
         $q=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->where('id',$id);
