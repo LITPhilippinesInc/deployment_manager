@@ -10,13 +10,13 @@ class LitHealthCheck extends Command {
   foreach(DB::table('lit_monitors')->where('enabled',true)->cursor() as $m) {
    $last=DB::table('lit_health_checks')->where('provider','custom:'.$m->id)->max('checked_at');
    if ($last && \Carbon\Carbon::parse($last,'UTC')->gt(now()->utc()->startOfMinute()->subMinutes($m->interval_minutes))) continue;
-   $this->check('custom:'.$m->id,$m->url,$m->type==='rss'?$m->id:null);
+   $this->check('custom:'.$m->id,$m->url,$m->type==='rss'?$m->id:null,$m->type);
   }
   DB::table('lit_health_checks')->where('checked_at','<',now()->utc()->subDays(31))->delete();
   return self::SUCCESS;
  }
- private function check(string $provider,string $url, ?int $feedId=null): void {
-  $minute=now()->utc()->startOfMinute(); $start=microtime(true); $code=null; $reachable=false;
+ private function check(string $provider,string $url, ?int $feedId=null,string $type='http'): void {
+  $minute=now()->utc()->startOfMinute(); $start=microtime(true); $code=null; $reachable=false; $status=null;
   try {
    $p=parse_url($url); $host=$p['host']??''; $scheme=$p['scheme']??''; $port=$scheme==='https'?443:80;
    if (!in_array($scheme,['http','https'],true)||isset($p['user'])||isset($p['pass'])||isset($p['port'])&&$p['port']!==$port||!preg_match('/^[a-z0-9.-]+$/iD',$host)||!str_contains($host,'.')) throw new \RuntimeException('Invalid endpoint');
@@ -25,12 +25,21 @@ class LitHealthCheck extends Command {
    foreach($ips as $ip) if (!filter_var($ip,FILTER_VALIDATE_IP,FILTER_FLAG_GLOBAL_RANGE)) throw new \RuntimeException('Nonpublic address');
    $response=Http::connectTimeout(3)->timeout(5)->withoutRedirecting()->withOptions(['proxy'=>'','curl'=>[CURLOPT_RESOLVE=>[$host.':'.$port.':'.$ips[0]],CURLOPT_IPRESOLVE=>CURL_IPRESOLVE_V4,CURLOPT_MAXFILESIZE=>2097152,CURLOPT_NOPROXY=>'*']])->get($url);
    $code=$response->status(); $reachable=$code>=200&&$code<400;
+   if ($type==='status') {
+    $reachable=false;
+    if ($code>=200 && $code<300) {
+     $data=$response->json();
+     $indicator=data_get($data,'status.indicator');
+     $status=match($indicator) {'none'=>'operational','minor'=>'degraded','major'=>'partial_outage','critical'=>'major_outage','maintenance'=>'maintenance',default=>'unknown'};
+     $reachable=$status!=='unknown';
+    }
+   }
    if ($feedId!==null) {
     $reachable=false;
     if ($code>=200 && $code<300) { $this->storeFeed($feedId,$response->body()); $reachable=true; }
    }
   } catch (\Exception $e) {}
-  DB::table('lit_health_checks')->insertOrIgnore(['provider'=>$provider,'checked_at'=>$minute,'reachable'=>$reachable,'code'=>$code,'ms'=>(int)round((microtime(true)-$start)*1000)]);
+  DB::table('lit_health_checks')->insertOrIgnore(['provider'=>$provider,'checked_at'=>$minute,'reachable'=>$reachable,'provider_status'=>$status,'code'=>$code,'ms'=>(int)round((microtime(true)-$start)*1000)]);
  }
  private function storeFeed(int $id,string $body): void {
   if (strlen($body)>2097152 || preg_match('/<!DOCTYPE|<!ENTITY/i',$body)) throw new \RuntimeException('Unsafe feed');
