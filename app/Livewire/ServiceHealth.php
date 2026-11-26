@@ -19,7 +19,7 @@ class ServiceHealth extends Component {
     }
     public function saveMonitor(): void {
         $this->authorizeManage();
-        $this->validate(['type'=>'required|in:http,rss','interval'=>'required|integer|in:1,5,15','name'=>'required|string|max:100','url'=>'required|url:http,https|max:2048']);
+        $this->validate(['type'=>'required|in:http,rss,status','interval'=>'required|integer|in:1,5,15','name'=>'required|string|max:100','url'=>'required|url:http,https|max:2048']);
         $p=parse_url($this->url);
         if (isset($p['user']) || isset($p['pass']) || isset($p['port']) || !preg_match('/^[a-z0-9.-]+$/iD',$p['host']??'') || !str_contains($p['host']??'','.')) {
             $this->addError('url','Use a public hostname without credentials or custom port.'); return;
@@ -71,6 +71,8 @@ class ServiceHealth extends Component {
         $bars = array_fill(0, 60, null);
         $counts = array_fill(0, 60, 0);
         $uptime = [];
+        $statusBars=array_fill(0,60,'unknown');
+        $severity=['unknown'=>0,'operational'=>1,'maintenance'=>2,'degraded'=>3,'partial_outage'=>4,'major_outage'=>5];
         foreach ([1,7,30] as $days) {
             $subset = $rows->filter(fn ($r) => \Carbon\Carbon::parse($r->checked_at,'UTC')->gte($now->copy()->subDays($days)));
             $uptime[$days] = $subset->count() ? round(100 * $subset->where('reachable',true)->count() / $subset->count(), 2) : null;
@@ -80,8 +82,10 @@ class ServiceHealth extends Component {
             if ($age < 0 || $age >= 86400) continue;
             $i = 59 - intdiv($age,1440);
             $counts[$i]++;
+            $s=$r->provider_status??'unknown';
+            if (($severity[$s]??0)>$severity[$statusBars[$i]]) $statusBars[$i]=$s;
             $bars[$i] = ($bars[$i] === false || ! $r->reachable) ? false : true;
         }
-        return ['bars'=>$bars,'counts'=>$counts,'uptime'=>$uptime,'latest'=>$rows->last()];
+        return ['statusBars'=>$statusBars,'bars'=>$bars,'counts'=>$counts,'uptime'=>$uptime,'latest'=>$rows->last()];
     }
 }
