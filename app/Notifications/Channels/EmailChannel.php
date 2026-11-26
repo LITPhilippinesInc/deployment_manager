@@ -55,7 +55,9 @@ class EmailChannel
             if ($customEmails) {
                 $recipients = [$customEmails];
             } else {
-                $recipients = $notifiable->getRecipients();
+                $recipients = (! $isTransactionalEmail && ! $isTestNotification && $notifiable instanceof Team)
+                    ? \App\Services\LitHealthRecipients::emails($notifiable)
+                    : $notifiable->getRecipients();
             }
 
             // Validate team membership for all recipients
