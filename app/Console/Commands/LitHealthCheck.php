@@ -8,11 +8,15 @@ class LitHealthCheck extends Command {
  protected $description = 'Record LIT monitor availability';
  public function handle(): int {
   $this->check('Auth0','https://status.auth0.com/');
-  foreach(DB::table('lit_monitors')->where('enabled',true)->cursor() as $m) $this->check('custom:'.$m->id,$m->url);
+  foreach(DB::table('lit_monitors')->where('enabled',true)->cursor() as $m) {
+   $last=DB::table('lit_health_checks')->where('provider','custom:'.$m->id)->max('checked_at');
+   if ($last && \Carbon\Carbon::parse($last,'UTC')->gt(now()->utc()->startOfMinute()->subMinutes($m->interval_minutes))) continue;
+   $this->check('custom:'.$m->id,$m->url,$m->type==='rss'?$m->id:null);
+  }
   DB::table('lit_health_checks')->where('checked_at','<',now()->utc()->subDays(31))->delete();
   return self::SUCCESS;
  }
- private function check(string $provider,string $url): void {
+ private function check(string $provider,string $url, ?int $feedId=null): void {
   $minute=now()->utc()->startOfMinute(); $start=microtime(true); $code=null; $reachable=false;
   try {
    $p=parse_url($url); $host=$p['host']??''; $scheme=$p['scheme']??''; $port=$scheme==='https'?443:80;
@@ -20,9 +24,28 @@ class LitHealthCheck extends Command {
    $ips=gethostbynamel($host);
    if (!$ips) throw new \RuntimeException('DNS failed');
    foreach($ips as $ip) if (!filter_var($ip,FILTER_VALIDATE_IP,FILTER_FLAG_GLOBAL_RANGE)) throw new \RuntimeException('Nonpublic address');
-   $response=Http::connectTimeout(3)->timeout(5)->withoutRedirecting()->withOptions(['proxy'=>'','curl'=>[CURLOPT_RESOLVE=>[$host.':'.$port.':'.$ips[0]],CURLOPT_IPRESOLVE=>CURL_IPRESOLVE_V4]])->get($url);
+   $response=Http::connectTimeout(3)->timeout(5)->withoutRedirecting()->withOptions(['proxy'=>'','curl'=>[CURLOPT_RESOLVE=>[$host.':'.$port.':'.$ips[0]],CURLOPT_IPRESOLVE=>CURL_IPRESOLVE_V4,CURLOPT_MAXFILESIZE=>2097152,CURLOPT_NOPROXY=>'*']])->get($url);
    $code=$response->status(); $reachable=$code>=200&&$code<400;
+   if ($feedId!==null) {
+    $reachable=false;
+    if ($code>=200 && $code<300) { $this->storeFeed($feedId,$response->body()); $reachable=true; }
+   }
   } catch (\Exception $e) {}
   DB::table('lit_health_checks')->insertOrIgnore(['provider'=>$provider,'checked_at'=>$minute,'reachable'=>$reachable,'code'=>$code,'ms'=>(int)round((microtime(true)-$start)*1000)]);
+ }
+ private function storeFeed(int $id,string $body): void {
+  if (strlen($body)>2097152 || preg_match('/<!DOCTYPE|<!ENTITY/i',$body)) throw new \RuntimeException('Unsafe feed');
+  $xml=simplexml_load_string($body,\SimpleXMLElement::class,LIBXML_NONET|LIBXML_NOERROR|LIBXML_NOWARNING);
+  if ($xml===false || !in_array($xml->getName(),['rss','feed'],true)) throw new \RuntimeException('Invalid RSS/Atom');
+  $entries=$xml->getName()==='rss'?$xml->xpath('./channel/item'):$xml->xpath('/*[local-name()="feed"]/*[local-name()="entry"]');
+  if ($entries===false) throw new \RuntimeException('Invalid entries');
+  foreach(array_slice($entries,0,200) as $entry) {
+   $field=static function($name) use($entry) { $nodes=$entry->xpath('./*[local-name()="'.$name.'"]'); return (string)($nodes[0]??''); };
+   $title=substr(strip_tags($field('title')),0,4000);
+   $description=substr(strip_tags($field('description')?:$field('summary')?:$field('content')),0,20000);
+   $published=substr($field('pubDate')?:$field('updated')?:$field('published'),0,200);
+   $fingerprint=hash('sha256',json_encode([$field('guid')?:$field('id'),$title,$description,$published],JSON_INVALID_UTF8_SUBSTITUTE));
+   DB::table('lit_monitor_incidents')->insertOrIgnore(['monitor_id'=>$id,'fingerprint'=>$fingerprint,'title'=>$title,'description'=>$description,'published'=>$published?:null,'created_at'=>now(),'updated_at'=>now()]);
+  }
  }
 }
