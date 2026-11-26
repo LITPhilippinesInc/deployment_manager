@@ -10,10 +10,10 @@ class LitHealthRecipients {
   $ids=DB::table('lit_notification_recipients')->where('team_id',$team->id)->pluck('user_id');
   return $team->members()->whereIn('users.id',$ids)->pluck('users.email')->filter(fn($email)=>self::eligible($email))->unique()->values()->all();
  }
- public static function send(Team $team,string $name,string $event,string $detail,bool $sync=false): int {
+ public static function send(Team $team,string $name,string $event,string $detail,bool $sync=false,array $context=[]): int {
   $count=0;
   foreach(self::emails($team) as $email) {
-   $notification=new \App\Notifications\LitServiceHealth($name,$event,$detail,$email);
+   $notification=new \App\Notifications\LitServiceHealth($name,$event,$detail,$email,$context);
    if (!$notification->via($team)) continue;
    if ($sync) $team->notifyNow($notification); else $team->notify($notification);
    $count++;
