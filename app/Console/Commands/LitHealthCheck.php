@@ -22,6 +22,7 @@ class LitHealthCheck extends Command {
   if (!$team || !$team->emailNotificationSettings?->use_instance_email_settings || !instanceSettings()->resend_enabled || !\App\Services\LitHealthRecipients::emails($team)) return;
   $rows=DB::table('lit_health_checks')->where('provider','custom:'.$m->id)->orderByDesc('checked_at')->limit(2)->get();
   $latest=$rows->first(); if (!$latest) return;
+  $context=['url'=>$m->url,'type'=>$m->type,'code'=>$latest->code,'ms'=>$latest->ms,'interval'=>$m->interval_minutes,'checked_at'=>$latest->checked_at];
   $state=$m->alert_state;
   $next=$state;
   if (!$latest->reachable) {
@@ -32,13 +33,13 @@ class LitHealthCheck extends Command {
   try {
    if ($state!==$next && $next!==null) {
     if ($state!==null || !in_array($next,['reachable','operational','unknown'],true)) {
-     \App\Services\LitHealthRecipients::send($team,$m->name,str_replace('_',' ',$next),'Previous state: '.($state??'not established').'. Current state: '.$next.'.');
+     \App\Services\LitHealthRecipients::send($team,$m->name,str_replace('_',' ',$next),'Previous state: '.($state??'not established').'. Current state: '.$next.'.'.($next==='unreachable'?' Two consecutive health checks failed.':''),false,$context);
     }
     DB::table('lit_monitors')->where('id',$m->id)->where('email_enabled',true)->update(['alert_state'=>$next]);
    }
    if ($m->type==='rss' && $state!==null && $before>0) {
     $new=DB::table('lit_monitor_incidents')->where('monitor_id',$m->id)->where('id','>',$before)->orderBy('id')->get();
-    if ($new->isNotEmpty()) \App\Services\LitHealthRecipients::send($team,$m->name,'New RSS announcements',$new->pluck('title')->take(20)->implode('; '));
+    if ($new->isNotEmpty()) \App\Services\LitHealthRecipients::send($team,$m->name,'New RSS announcements','New provider announcements were retrieved. RSS alone does not establish current provider health.',false,$context+['announcements'=>$new->take(5)->map(fn($entry)=>['title'=>$entry->title,'published'=>$entry->published,'description'=>mb_substr($entry->description??'',0,1500)])->values()->all()]);
    }
   } catch (\Throwable $e) {
    \Illuminate\Support\Facades\Log::warning('LIT monitor notification enqueue failed',['monitor_id'=>$m->id,'exception'=>get_class($e)]);
