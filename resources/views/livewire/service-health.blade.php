@@ -36,19 +36,8 @@
                 @endif
             </div>
         </div>
-        @if ($item['type']==='rss')
-            <h3 class="font-semibold mb-2">Incident and maintenance announcements</h3>
-            @forelse ($item['incidents'] as $incident)
-                <details class="border-b border-neutral-500/20 py-3">
-                    <summary class="cursor-pointer">{{ $incident->title ?: 'Announcement' }} <span class="text-xs text-neutral-500">{{ $incident->published }}</span></summary>
-                    <p class="whitespace-pre-wrap break-words text-sm mt-2">{{ $incident->description }}</p>
-                </details>
-            @empty
-                <p class="text-sm text-neutral-500">No announcements recorded. This does not establish operational status.</p>
-            @endforelse
-            <p class="text-xs text-neutral-500 mt-2">Showing up to 50 saved announcements, newest retrieved first.</p>
-        @else
-        <div class="flex w-full gap-0.5" role="img" aria-label="Status page availability over the last 24 hours">
+        <h3 class="font-semibold mb-2">{{ $item['type'] === 'rss' ? 'Feed retrieval history' : 'Endpoint availability' }}</h3>
+        <div class="flex w-full gap-0.5" role="img" aria-label="{{ $item['type'] === 'rss' ? 'Feed retrieval availability over the last 24 hours' : 'Endpoint availability over the last 24 hours' }}">
             @foreach ($bars as $i => $bar)
                 <div class="h-8 min-w-0 flex-1 rounded-sm" style="background-color: {{ $bar === null ? '#737373' : ($bar ? '#22a06b' : '#dc4545') }}" title="{{ $bar === null ? 'No data' : ($bar ? 'All recorded checks passed' : 'At least one failed check') }} · {{ $counts[$i] }} checks"></div>
             @endforeach
@@ -59,7 +48,18 @@
                 <div class="rounded border border-neutral-200 dark:border-white/10 p-3"><div class="text-xs text-neutral-500">{{ $days === 1 ? '24 hours' : $days.' days' }}</div><div class="text-lg font-semibold">{{ $value === null ? '—' : $value.'%' }}</div></div>
             @endforeach
         </div>
-        <p class="text-xs text-neutral-500">Green: passed · Red: failed · Gray: no data. Percentages use recorded checks only; missing checks are excluded.</p>
+        <p class="text-xs text-neutral-500">{{ $item['type'] === 'rss' ? 'Green: feed retrieved · Red: retrieval failed · Gray: no data. Percentages measure feed retrieval, not provider uptime.' : 'Green: passed · Red: failed · Gray: no data.' }} Percentages use recorded checks only; missing checks are excluded.</p>
+        @if ($item['type']==='rss')
+            <h3 class="font-semibold mb-2">Official incident and maintenance timeline</h3>
+            @forelse ($item['incidents'] as $incident)
+                <details class="border-l-2 border-neutral-500/40 pl-4 ml-2 py-3">
+                    <summary class="cursor-pointer">{{ $incident->title ?: 'Announcement' }} <span class="text-xs text-neutral-500">{{ $incident->published ?: 'Publication date unavailable' }}</span></summary>
+                    <p class="whitespace-pre-wrap break-words text-sm mt-2">{{ $incident->description }}</p>
+                </details>
+            @empty
+                <p class="text-sm text-neutral-500">No announcements recorded. This does not establish operational status.</p>
+            @endforelse
+            <p class="text-xs text-neutral-500 mt-2">Showing up to 50 saved announcements, newest retrieved first. Announcements are not inferred outage durations.</p>
         @endif
         <p class="text-xs text-neutral-500 mt-2">Last check (UTC): {{ $latest->checked_at ?? 'Awaiting scheduler' }}</p>
         @if ($canManage && $item['id'])
