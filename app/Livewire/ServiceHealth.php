@@ -3,6 +3,32 @@ namespace App\Livewire;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 class ServiceHealth extends Component {
+    public array $recipientIds = [];
+    public string $recipientMessage = '';
+    public function mount(): void {
+        $this->recipientIds=DB::table('lit_notification_recipients')->where('team_id',currentTeam()->id)->pluck('user_id')->map(fn($id)=>(string)$id)->all();
+    }
+    public function saveRecipients(): void {
+        $this->authorizeManage();
+        $this->validate(['recipientIds'=>'array','recipientIds.*'=>'integer|distinct']);
+        $team=\App\Models\Team::findOrFail(currentTeam()->id);
+        $ids=$team->members()->whereIn('users.id',$this->recipientIds)->get(['users.id','users.email'])->filter(fn($u)=>\App\Services\LitHealthRecipients::eligible($u->email))->pluck('id');
+        abort_unless($ids->count()===count($this->recipientIds),422);
+        DB::transaction(function() use($team,$ids) {
+            DB::table('lit_notification_recipients')->where('team_id',$team->id)->delete();
+            foreach($ids as $id) DB::table('lit_notification_recipients')->insert(['team_id'=>$team->id,'user_id'=>$id]);
+        });
+        $this->recipientMessage='Recipients saved.';
+    }
+    public function testRecipients(): void {
+        $this->authorizeManage();
+        try {
+            $count=\App\Services\LitHealthRecipients::send(\App\Models\Team::findOrFail(currentTeam()->id),'Email Test','Test Notification','Testing Service Health email delivery.',true);
+            $this->recipientMessage=$count ? "Test email accepted for $count recipient(s)." : 'No eligible saved recipients or instance Resend is not enabled.';
+        } catch (\Throwable $e) {
+            $this->recipientMessage='Test delivery failed. Check email settings and recipient addresses.';
+        }
+    }
     public bool $showMonitorModal = false;
     public string $name = '';
     public string $type = 'http';
@@ -69,7 +95,7 @@ class ServiceHealth extends Component {
         $monitors=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->orderBy('id')->get();
         $items=[];
         foreach($monitors as $m) $items[]=['name'=>$m->name,'url'=>$m->url,'id'=>$m->id,'type'=>$m->type,'interval'=>$m->interval_minutes,'incidents'=>$m->type==='rss'?DB::table('lit_monitor_incidents')->where('monitor_id',$m->id)->orderByDesc('id')->limit(50)->get():[],'enabled'=>$m->enabled,'email_enabled'=>$m->email_enabled]+$this->history('custom:'.$m->id);
-        return view('livewire.service-health',['items'=>$items,'canManage'=>auth()->user()?->isAdminOfTeam(currentTeam()->id)]);
+        return view('livewire.service-health',['items'=>$items,'recipientMembers'=>auth()->user()?->isAdminOfTeam(currentTeam()->id)?\App\Models\Team::findOrFail(currentTeam()->id)->members()->get(['users.id','users.name','users.email']):collect(),'canManage'=>auth()->user()?->isAdminOfTeam(currentTeam()->id)]);
     }
     private function history(string $provider): array {
         $now = now()->utc()->startOfMinute();
