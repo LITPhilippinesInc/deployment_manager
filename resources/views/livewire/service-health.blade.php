@@ -1,6 +1,6 @@
 <div class="flex w-full flex-col gap-6" wire:poll.60s>
     <x-slot:title>Service Health | LIT Deployment Manager</x-slot:title>
-    <div><h1 class="text-2xl font-semibold">Service Health</h1><p class="text-sm text-neutral-500">External service monitoring</p></div>
+    <div><h1 class="text-2xl font-semibold">Service Health</h1><p class="text-sm text-neutral-500">External service monitoring · Email alerts use instance Resend settings and team members; enable instance email settings in team notifications.</p></div>
     @if ($canManage)
     <div>
         <button type="button" class="button" wire:click="addMonitor">+ Add Monitor</button>
@@ -97,6 +97,7 @@
         <p class="text-xs text-neutral-500 mt-2">Last check (UTC): {{ $latest->checked_at ?? 'Awaiting scheduler' }}</p>
         @if ($canManage && $item['id'])
             <div class="flex gap-2 mt-3">
+                <button class="button" wire:click="toggleEmail({{ $item['id'] }})">{{ $item['email_enabled'] ? 'Email alerts: On' : 'Email alerts: Off' }}</button>
                 <button class="button" wire:click="editMonitor({{ $item['id'] }})">Edit</button>
                 <button class="button" wire:click="toggleMonitor({{ $item['id'] }})">{{ $item['enabled'] ? 'Pause' : 'Resume' }}</button>
                 <button class="button" wire:confirm="Delete this monitor and its history?" wire:click="deleteMonitor({{ $item['id'] }})">Delete</button>
