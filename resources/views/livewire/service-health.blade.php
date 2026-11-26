@@ -50,7 +50,9 @@
         </div>
         <p class="text-xs text-neutral-500">{{ $item['type'] === 'rss' ? 'Green: feed retrieved · Red: retrieval failed · Gray: no data. Percentages measure feed retrieval, not provider uptime.' : 'Green: passed · Red: failed · Gray: no data.' }} Percentages use recorded checks only; missing checks are excluded.</p>
         @if ($item['type']==='rss')
-            <h3 class="font-semibold mb-2">Official incident and maintenance timeline</h3>
+            <details class="mt-3">
+            <summary class="cursor-pointer text-sm font-medium">View incident and maintenance history ({{ count($item['incidents']) }})</summary>
+            <div class="mt-2 max-h-80 overflow-y-auto">
             @forelse ($item['incidents'] as $incident)
                 <details class="border-l-2 border-neutral-500/40 pl-4 ml-2 py-3">
                     <summary class="cursor-pointer">{{ $incident->title ?: 'Announcement' }} <span class="text-xs text-neutral-500">{{ $incident->published ?: 'Publication date unavailable' }}</span></summary>
@@ -60,6 +62,8 @@
                 <p class="text-sm text-neutral-500">No announcements recorded. This does not establish operational status.</p>
             @endforelse
             <p class="text-xs text-neutral-500 mt-2">Showing up to 50 saved announcements, newest retrieved first. Announcements are not inferred outage durations.</p>
+            </div>
+            </details>
         @endif
         <p class="text-xs text-neutral-500 mt-2">Last check (UTC): {{ $latest->checked_at ?? 'Awaiting scheduler' }}</p>
         @if ($canManage && $item['id'])
