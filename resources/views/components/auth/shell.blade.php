@@ -8,7 +8,7 @@
     <div class="auth-shell-content">
         <div class="auth-card">
             <div class="auth-card-heading">
-                <img src="{{ asset('lit-brand.svg') }}" alt="LIT" class="mx-auto mb-4 size-12" />
+                <img src="{{ asset('lit-brand.svg') }}" alt="LIT" width="48" height="48" class="mx-auto mb-4 size-12" />
                 <h1>{{ $title }}</h1>
                 @if ($description)
                     <p>{{ $description }}</p>
