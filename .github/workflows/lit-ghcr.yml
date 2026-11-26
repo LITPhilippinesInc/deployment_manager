@@ -2,7 +2,7 @@ name: LIT production image
 on:
   workflow_dispatch:
   push:
-    branches: [development, main]
+    branches: [main]
 permissions:
   contents: read
   packages: write
@@ -11,6 +11,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   publish:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -31,7 +32,7 @@ jobs:
           images: ghcr.io/litphilippinesinc/deployment_manager
           flavor: latest=false
           tags: |
-            type=raw,value=development,enable=${{ github.ref == 'refs/heads/development' }}
+
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha,format=long
       - uses: docker/build-push-action@v6
