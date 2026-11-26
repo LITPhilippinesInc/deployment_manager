@@ -10,10 +10,39 @@ class LitHealthCheck extends Command {
   foreach(DB::table('lit_monitors')->where('enabled',true)->cursor() as $m) {
    $last=DB::table('lit_health_checks')->where('provider','custom:'.$m->id)->max('checked_at');
    if ($last && \Carbon\Carbon::parse($last,'UTC')->gt(now()->utc()->startOfMinute()->subMinutes($m->interval_minutes))) continue;
+   $before=DB::table('lit_monitor_incidents')->where('monitor_id',$m->id)->max('id')??0;
    $this->check('custom:'.$m->id,$m->url,$m->type==='rss'?$m->id:null,$m->type);
+   if ($m->email_enabled) $this->alerts($m,$before);
   }
   DB::table('lit_health_checks')->where('checked_at','<',now()->utc()->subDays(31))->delete();
   return self::SUCCESS;
+ }
+ private function alerts(object $m,int $before): void {
+  $team=\App\Models\Team::find($m->team_id);
+  if (!$team || !$team->emailNotificationSettings?->use_instance_email_settings || !instanceSettings()->resend_enabled || !$team->getRecipients()) return;
+  $rows=DB::table('lit_health_checks')->where('provider','custom:'.$m->id)->orderByDesc('checked_at')->limit(2)->get();
+  $latest=$rows->first(); if (!$latest) return;
+  $state=$m->alert_state;
+  $next=$state;
+  if (!$latest->reachable) {
+   if ($rows->count()===2 && !$rows[1]->reachable) $next='unreachable';
+  } else {
+   $next=$m->type==='status'?($latest->provider_status??'unknown'):'reachable';
+  }
+  try {
+   if ($state!==$next && $next!==null) {
+    if ($state!==null || !in_array($next,['reachable','operational','unknown'],true)) {
+     $team->notify(new \App\Notifications\LitServiceHealth($m->name, str_replace('_',' ',$next), 'Previous state: '.($state??'not established').'. Current state: '.$next.'.'));
+    }
+    DB::table('lit_monitors')->where('id',$m->id)->where('email_enabled',true)->update(['alert_state'=>$next]);
+   }
+   if ($m->type==='rss' && $state!==null && $before>0) {
+    $new=DB::table('lit_monitor_incidents')->where('monitor_id',$m->id)->where('id','>',$before)->orderBy('id')->get();
+    if ($new->isNotEmpty()) $team->notify(new \App\Notifications\LitServiceHealth($m->name,'New RSS announcements',$new->pluck('title')->take(20)->implode('; ')));
+   }
+  } catch (\Throwable $e) {
+   \Illuminate\Support\Facades\Log::warning('LIT monitor notification enqueue failed',['monitor_id'=>$m->id,'exception'=>get_class($e)]);
+  }
  }
  private function check(string $provider,string $url, ?int $feedId=null,string $type='http'): void {
   $minute=now()->utc()->startOfMinute(); $start=microtime(true); $code=null; $reachable=false; $status=null;
