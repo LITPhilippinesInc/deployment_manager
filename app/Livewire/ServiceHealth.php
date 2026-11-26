@@ -40,7 +40,10 @@ class ServiceHealth extends Component {
         $m=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->where('id',$id)->first(); abort_unless($m,404);
         $this->resetValidation(); $this->showMonitorModal=true; $this->editing=$id; $this->name=$m->name; $this->url=$m->url; $this->type=$m->type; $this->interval=$m->interval_minutes;
     }
-    public function cancelEdit(): void { $this->resetValidation(); $this->reset('name','url','editing','type','interval'); }
+    public function cancelEdit(): void {
+        $this->resetValidation();
+        $this->reset('name','url','editing','type','interval','showMonitorModal');
+    }
     public function toggleMonitor(int $id): void {
         $this->authorizeManage();
         $q=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->where('id',$id);
