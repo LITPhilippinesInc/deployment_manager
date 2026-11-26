@@ -14,13 +14,13 @@
                 <form wire:submit="saveMonitor" class="flex flex-col gap-3 mt-4">
             <label>Monitor name <input class="input" wire:model="name" required maxlength="100" placeholder="LIT Website"></label>
             @error('name') <span class="text-red-500">{{ $message }}</span> @enderror
-            <label>Monitor type <select class="input" wire:model.live="type" @disabled($editing !== null)><option value="http">HTTP / HTTPS</option><option value="rss">RSS / Atom</option></select></label>
+            <label>Monitor type <select class="input" wire:model.live="type" @disabled($editing !== null)><option value="http">HTTP / HTTPS</option><option value="rss">RSS / Atom</option><option value="status">Provider Status API (Statuspage JSON)</option></select></label>
             @error('type') <span class="text-red-500">{{ $message }}</span> @enderror
             <label>Check interval <select class="input" wire:model="interval"><option value="1">Every minute</option><option value="5">Every 5 minutes</option><option value="15">Every 15 minutes</option></select></label>
             @error('interval') <span class="text-red-500">{{ $message }}</span> @enderror
             <label>{{ $type === 'rss' ? 'Feed URL' : 'Public URL' }} <input class="input" type="url" wire:model="url" required placeholder="https://www.lit.com.ph" @disabled($editing !== null)></label>
             @error('url') <span class="text-red-500">{{ $message }}</span> @enderror
-            <p class="text-xs text-neutral-500">Public IPv4 endpoints only. RSS feed retrieval does not measure service uptime.</p>
+            <p class="text-xs text-neutral-500">Public IPv4 endpoints only. Use a Statuspage JSON endpoint for explicit provider health. RSS provides announcements only.</p>
             <div class="flex gap-2"><button class="button" type="submit">{{ $editing ? 'Save changes' : 'Add Monitor' }}</button><button class="button" type="button" wire:click="cancelEdit">Cancel</button></div>
                 </form>
             </div>
@@ -45,7 +45,27 @@
                 @endif
             </div>
         </div>
-        <h3 class="font-semibold mb-2">{{ $item['type'] === 'rss' ? 'Feed retrieval history' : 'Endpoint availability' }}</h3>
+        @if (in_array($item['type'],['rss','status']))
+            @php
+                $statusLabels=['unknown'=>'Unknown','operational'=>'Operational','maintenance'=>'Maintenance','degraded'=>'Degraded','partial_outage'=>'Partial outage','major_outage'=>'Major outage'];
+                $statusColors=['unknown'=>'#737373','operational'=>'#22a06b','maintenance'=>'#4389d4','degraded'=>'#eab308','partial_outage'=>'#f97316','major_outage'=>'#dc4545'];
+                $currentStatus=($item['enabled'] && $latest && $latest->reachable && \Carbon\Carbon::parse($latest->checked_at,'UTC')->gte(now()->utc()->subMinutes($item['interval']+2))) ? ($latest->provider_status ?? 'unknown') : 'unknown';
+            @endphp
+            <div class="mb-4">
+                <div class="flex justify-between"><h3 class="font-semibold">Provider-reported health</h3><span style="color: {{ $statusColors[$currentStatus] }}">{{ $statusLabels[$currentStatus] }}</span></div>
+                @if ($item['type']==='rss')
+                    <p class="text-xs text-neutral-500 mt-2">RSS announcements alone do not establish current health or resolution. Use a supported status API for confirmed status.</p>
+                @else
+                    <div class="flex gap-0.5 mt-2">
+                        @foreach ($item['statusBars'] as $status)
+                            <div class="h-8 flex-1 rounded-sm" style="background-color: {{ $statusColors[$status] }}" title="{{ $statusLabels[$status] }}"></div>
+                        @endforeach
+                    </div>
+                    <p class="text-xs text-neutral-500 mt-2">Last 24 hours · worst observed known status per interval · gray: unknown.</p>
+                @endif
+            </div>
+        @endif
+        <h3 class="font-semibold mb-2">{{ $item['type'] === 'rss' ? 'Feed retrieval history' : ($item['type']==='status' ? 'Status API connectivity' : 'Endpoint availability') }}</h3>
         <div class="flex w-full gap-0.5" role="img" aria-label="{{ $item['type'] === 'rss' ? 'Feed retrieval availability over the last 24 hours' : 'Endpoint availability over the last 24 hours' }}">
             @foreach ($bars as $i => $bar)
                 <div class="h-8 min-w-0 flex-1 rounded-sm" style="background-color: {{ $bar === null ? '#737373' : ($bar ? '#22a06b' : '#dc4545') }}" title="{{ $bar === null ? 'No data' : ($bar ? 'All recorded checks passed' : 'At least one failed check') }} · {{ $counts[$i] }} checks"></div>
