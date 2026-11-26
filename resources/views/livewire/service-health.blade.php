@@ -1,7 +1,21 @@
 <div class="flex w-full flex-col gap-6" wire:poll.60s>
     <x-slot:title>Service Health | LIT Deployment Manager</x-slot:title>
-    <div><h1 class="text-2xl font-semibold">Service Health</h1><p class="text-sm text-neutral-500">External service monitoring · Email alerts use instance Resend settings and team members; enable instance email settings in team notifications.</p></div>
+    <div><h1 class="text-2xl font-semibold">Service Health</h1><p class="text-sm text-neutral-500">External service monitoring · Email alerts use instance Resend settings and selected team members; enable instance email settings in team notifications.</p></div>
     @if ($canManage)
+    <details class="rounded-lg border border-neutral-200 dark:border-white/10 p-4">
+        <summary class="cursor-pointer font-semibold">Notification Recipients</summary>
+        <p class="text-sm text-neutral-500 my-2">Select team members for all external monitor alerts. Save before sending a test.</p>
+        @foreach ($recipientMembers as $member)
+            @php $eligible=\App\Services\LitHealthRecipients::eligible($member->email); @endphp
+            <label class="flex items-center gap-2 py-2" wire:key="recipient-{{ $member->id }}">
+                <input type="checkbox" wire:model="recipientIds" value="{{ $member->id }}" @disabled(!$eligible)>
+                <span>{{ $member->name }} · {{ $member->email }} {{ $eligible ? '' : '(placeholder or invalid)' }}</span>
+            </label>
+        @endforeach
+        @error('recipientIds.*') <p class="text-warning">{{ $message }}</p> @enderror
+        <div class="flex gap-2 mt-3"><button class="button" wire:click="saveRecipients">Save recipients</button><button class="button" wire:click="testRecipients" wire:loading.attr="disabled">Send Test</button></div>
+        <p class="text-sm mt-2" role="status">{{ $recipientMessage }}</p>
+    </details>
     <div>
         <button type="button" class="button" wire:click="addMonitor">+ Add Monitor</button>
         <div x-data="{ open: $wire.entangle('showMonitorModal').live }" x-cloak x-show="open" x-on:keydown.escape.window="if(open) $wire.cancelEdit()" class="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="monitor-modal-title">
