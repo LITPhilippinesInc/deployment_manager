@@ -1,3 +1,4 @@
+{{-- Modified for LIT Deployment Manager branding. --}}
 @props([
     'title',
     'description' => null,
@@ -7,6 +8,7 @@
     <div class="auth-shell-content">
         <div class="auth-card">
             <div class="auth-card-heading">
+                <img src="{{ asset('lit-brand.svg') }}" alt="LIT" class="mx-auto mb-4 size-12" />
                 <h1>{{ $title }}</h1>
                 @if ($description)
                     <p>{{ $description }}</p>
