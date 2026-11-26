@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 class ServiceHealth extends Component {
     public string $name = '';
+    public string $type = 'http';
+    public int $interval = 1;
     public string $url = '';
     public ?int $editing = null;
     private function authorizeManage(): void {
@@ -11,7 +13,7 @@ class ServiceHealth extends Component {
     }
     public function saveMonitor(): void {
         $this->authorizeManage();
-        $this->validate(['name'=>'required|string|max:100','url'=>'required|url:http,https|max:2048']);
+        $this->validate(['type'=>'required|in:http,rss','interval'=>'required|integer|in:1,5,15','name'=>'required|string|max:100','url'=>'required|url:http,https|max:2048']);
         $p=parse_url($this->url);
         if (isset($p['user']) || isset($p['pass']) || isset($p['port']) || !preg_match('/^[a-z0-9.-]+$/iD',$p['host']??'') || !str_contains($p['host']??'','.')) {
             $this->addError('url','Use a public hostname without credentials or custom port.'); return;
@@ -19,20 +21,20 @@ class ServiceHealth extends Component {
         $q=DB::table('lit_monitors')->where('team_id',currentTeam()->id);
         if ($this->editing) {
             $m=(clone $q)->where('id',$this->editing)->first(); abort_unless($m,404);
-            if ($m->url !== $this->url) { $this->addError('url','Create a new monitor to change endpoint and preserve history.'); return; }
-            (clone $q)->where('id',$this->editing)->update(['name'=>$this->name,'updated_at'=>now()]);
+            if ($m->url !== $this->url || $m->type !== $this->type) { $this->addError('url','Create a new monitor to change endpoint and preserve history.'); return; }
+            (clone $q)->where('id',$this->editing)->update(['name'=>$this->name,'interval_minutes'=>$this->interval,'updated_at'=>now()]);
         } else {
             if ($q->count()>=10) { $this->addError('name','Maximum 10 monitors per team.'); return; }
-            DB::table('lit_monitors')->insert(['team_id'=>currentTeam()->id,'name'=>$this->name,'url'=>$this->url,'created_at'=>now(),'updated_at'=>now()]);
+            DB::table('lit_monitors')->insert(['team_id'=>currentTeam()->id,'name'=>$this->name,'url'=>$this->url,'type'=>$this->type,'interval_minutes'=>$this->interval,'created_at'=>now(),'updated_at'=>now()]);
         }
-        $this->reset('name','url','editing');
+        $this->reset('name','url','editing','type','interval');
     }
     public function editMonitor(int $id): void {
         $this->authorizeManage();
         $m=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->where('id',$id)->first(); abort_unless($m,404);
-        $this->editing=$id; $this->name=$m->name; $this->url=$m->url;
+        $this->editing=$id; $this->name=$m->name; $this->url=$m->url; $this->type=$m->type; $this->interval=$m->interval_minutes;
     }
-    public function cancelEdit(): void { $this->reset('name','url','editing'); }
+    public function cancelEdit(): void { $this->reset('name','url','editing','type','interval'); }
     public function toggleMonitor(int $id): void {
         $this->authorizeManage();
         $q=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->where('id',$id);
@@ -50,8 +52,8 @@ class ServiceHealth extends Component {
     public function render() {
         abort_unless(auth()->check() && app(\App\Services\Access\AccessResolver::class)->coversWholeTeam(auth()->user(), currentTeam()->id), 403);
         $monitors=DB::table('lit_monitors')->where('team_id',currentTeam()->id)->orderBy('id')->get();
-        $items=[['name'=>'Auth0','url'=>'https://status.auth0.com/','id'=>null,'enabled'=>true]+$this->history('Auth0')];
-        foreach($monitors as $m) $items[]=['name'=>$m->name,'url'=>$m->url,'id'=>$m->id,'enabled'=>$m->enabled]+$this->history('custom:'.$m->id);
+        $items=[['name'=>'Auth0','url'=>'https://status.auth0.com/','id'=>null,'type'=>'http','interval'=>1,'incidents'=>[],'enabled'=>true]+$this->history('Auth0')];
+        foreach($monitors as $m) $items[]=['name'=>$m->name,'url'=>$m->url,'id'=>$m->id,'type'=>$m->type,'interval'=>$m->interval_minutes,'incidents'=>$m->type==='rss'?DB::table('lit_monitor_incidents')->where('monitor_id',$m->id)->orderByDesc('id')->limit(50)->get():[],'enabled'=>$m->enabled]+$this->history('custom:'.$m->id);
         return view('livewire.service-health',['items'=>$items,'canManage'=>auth()->user()?->isAdminOfTeam(currentTeam()->id)]);
     }
     private function history(string $provider): array {
