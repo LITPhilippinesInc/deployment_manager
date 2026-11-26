@@ -6,7 +6,7 @@
         <button type="button" class="button" wire:click="addMonitor">+ Add Monitor</button>
         <div x-data="{ open: $wire.entangle('showMonitorModal').live }" x-cloak x-show="open" x-on:keydown.escape.window="if(open) $wire.cancelEdit()" class="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="monitor-modal-title">
             <div class="absolute inset-0 bg-black/70" x-on:click="$wire.cancelEdit()"></div>
-            <div class="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-neutral-300 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-neutral-800">
+            <div class="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-neutral-500/40 p-6 shadow-xl bg-surface" style="background-color: var(--color-surface, #292929);">
                 <div class="flex items-center justify-between gap-4">
                     <h2 id="monitor-modal-title" class="text-lg font-semibold">{{ $editing ? 'Edit Monitor' : 'Add Monitor' }}</h2>
                     <button type="button" class="button" aria-label="Close" wire:click="cancelEdit">×</button>
