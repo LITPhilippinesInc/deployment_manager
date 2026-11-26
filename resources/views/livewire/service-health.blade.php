@@ -2,9 +2,16 @@
     <x-slot:title>Service Health | LIT Deployment Manager</x-slot:title>
     <div><h1 class="text-2xl font-semibold">Service Health</h1><p class="text-sm text-neutral-500">External service monitoring</p></div>
     @if ($canManage)
-    <div x-data="{ open: false }" class="rounded-lg border border-neutral-200 p-4 dark:border-white/10">
-        <button type="button" class="button" x-on:click="open = !open">+ Add Monitor</button>
-        <form x-show="open || $wire.editing !== null" wire:submit="saveMonitor" class="flex flex-col gap-3 mt-3">
+    <div>
+        <button type="button" class="button" wire:click="addMonitor">+ Add Monitor</button>
+        <div x-data="{ open: $wire.entangle('showMonitorModal').live }" x-cloak x-show="open" x-on:keydown.escape.window="if(open) $wire.cancelEdit()" class="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="monitor-modal-title">
+            <div class="absolute inset-0 bg-black/70" x-on:click="$wire.cancelEdit()"></div>
+            <div class="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-neutral-300 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-neutral-800">
+                <div class="flex items-center justify-between gap-4">
+                    <h2 id="monitor-modal-title" class="text-lg font-semibold">{{ $editing ? 'Edit Monitor' : 'Add Monitor' }}</h2>
+                    <button type="button" class="button" aria-label="Close" wire:click="cancelEdit">×</button>
+                </div>
+                <form wire:submit="saveMonitor" class="flex flex-col gap-3 mt-4">
             <label>Monitor name <input class="input" wire:model="name" required maxlength="100" placeholder="LIT Website"></label>
             @error('name') <span class="text-red-500">{{ $message }}</span> @enderror
             <label>Monitor type <select class="input" wire:model.live="type" @disabled($editing !== null)><option value="http">HTTP / HTTPS</option><option value="rss">RSS / Atom</option></select></label>
@@ -14,8 +21,10 @@
             <label>{{ $type === 'rss' ? 'Feed URL' : 'Public URL' }} <input class="input" type="url" wire:model="url" required placeholder="https://www.lit.com.ph" @disabled($editing !== null)></label>
             @error('url') <span class="text-red-500">{{ $message }}</span> @enderror
             <p class="text-xs text-neutral-500">Public IPv4 endpoints only. RSS feed retrieval does not measure service uptime.</p>
-            <div class="flex gap-2"><button class="button" type="submit">{{ $editing ? 'Save changes' : 'Add Monitor' }}</button><button class="button" type="button" wire:click="cancelEdit" x-on:click="open=false">Cancel</button></div>
-        </form>
+            <div class="flex gap-2"><button class="button" type="submit">{{ $editing ? 'Save changes' : 'Add Monitor' }}</button><button class="button" type="button" wire:click="cancelEdit">Cancel</button></div>
+                </form>
+            </div>
+        </div>
     </div>
     @endif
     @foreach ($items as $item)
