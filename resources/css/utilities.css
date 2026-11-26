@@ -1,3 +1,4 @@
+/* Modified for LIT Deployment Manager branding. */
 @utility apexcharts-tooltip {
     @apply overflow-visible! rounded-none! border-0! bg-transparent! shadow-none! dark:text-white!;
 }
@@ -40,7 +41,7 @@
     }
 
     &:focus-visible {
-        box-shadow: inset 4px 0 0 #6b16ed, inset 0 0 0 1px #e5e5e5;
+        box-shadow: inset 4px 0 0 #e3c25a, inset 0 0 0 1px #e5e5e5;
     }
 
     &:where(.dark, .dark *):focus-visible {
