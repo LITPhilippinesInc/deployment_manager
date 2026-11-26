@@ -40,6 +40,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $this->scheduleInstance = $schedule;
+        $schedule->command('lit:health-check')->everyMinute()->onOneServer()->withoutOverlapping(2);
         $this->settings = instanceSettings();
         $this->updateCheckFrequency = $this->settings->update_check_frequency ?: '0 * * * *';
 
