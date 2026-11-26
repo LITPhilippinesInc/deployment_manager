@@ -13,7 +13,7 @@
             const hex = String(color ?? '').trim().replace(/^#/, '').toLowerCase();
             if (/^[a-f\d]{6}$/.test(hex)) return `#${hex}`;
             if (/^[a-f\d]{3}$/.test(hex)) return `#${hex.replace(/./g, '$&$&')}`;
-            return '#2563a6';
+            return '#e3c25a';
         };
         const hexToOklab = (hex) => {
             const [r, g, b] = window.normalizeThemeColor(hex).match(/[a-f\d]{2}/gi).map((channel) => srgbToLinear(parseInt(channel, 16) / 255));
@@ -118,7 +118,7 @@
         window.customThemePresets = [
             // The built-in Dark theme, not a custom theme. Its colors start the fields when the user edits it. The sidebar is
             // the color that the Dark sidebar shows: #120e1a with its 9% purple wash.
-            { name: 'LIT', theme: null, swatch: { sidebar: '#1a0f2d', selected: '#1c1c1c', accent: '#2563a6', background: '#0a0a0a' } },
+            { name: 'LIT', theme: null, swatch: { sidebar: '#393939', selected: '#4a4a4a', accent: '#e3c25a', background: '#242424' } },
             { name: 'Midnight', theme: { sidebar: '#0f172a', selected: '#2e4a7d', accent: '#f2458f', background: '#1a2338' } },
             { name: 'Forest', theme: { sidebar: '#12342b', selected: '#2c6e57', accent: '#f4b860', background: '#1b2a25' } },
             { name: 'Ember', theme: { sidebar: '#3b1410', selected: '#8f2d1f', accent: '#ffb86b', background: '#241816' } },
