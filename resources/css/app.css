@@ -1,3 +1,4 @@
+/* Modified for LIT Deployment Manager branding. */
 @import "./fonts.css" layer(base);
 
 @import "tailwindcss";
@@ -43,18 +44,18 @@
        values in .dark. */
     --color-severity-high: oklch(56% 0.135 50);
     --color-severity-medium: oklch(55% 0.1 235);
-    --color-coollabs-50: oklch(96.33% 0.0206 301.15);
-    --color-coollabs: oklch(49.65% 0.2709 289.33);
-    --color-coollabs-100: oklch(52.34% 0.287 289.16);
-    --color-coollabs-200: oklch(43.76% 0.2369 289.82);
-    --color-coollabs-300: oklch(38.04% 0.2031 290.47);
-    /* coolLabs brand purple. Primary actions, focus, and active navigation
+    --color-coollabs-50: #faf3d9;
+    --color-coollabs: #8a6b18;
+    --color-coollabs-100: #9b781c;
+    --color-coollabs-200: #765911;
+    --color-coollabs-300: #665018;
+    /* LIT branding. Primary actions, focus, and active navigation
        use these in both themes. Warning yellow is not an accent. */
-    --color-brand: #6b16ed;
-    --color-brand-hover: #7317ff;
-    --color-brand-press: #5a12c7;
-    --color-brand-depth: #4a0fa3;
-    --color-brand-light: #a391ff;
+    --color-brand: #e3c25a;
+    --color-brand-hover: #efd47c;
+    --color-brand-press: #c5a344;
+    --color-brand-depth: #96751e;
+    --color-brand-light: #efd47c;
     --color-coolgray-100: oklch(20.9% 0 0);
     --color-coolgray-200: oklch(24.35% 0 0);
     --color-coolgray-300: oklch(26.03% 0 0);
@@ -66,22 +67,22 @@
     /* Content canvas: the darkest shell layer (sRGB ~10). Hex, not oklch:
        oklch lightness compresses to near-black below ~15%, so oklch(7.5%)
        renders as sRGB 1 with no visible step. */
-    --color-app: oklch(14.48% 0 0);
+    --color-app: #242424;
     /* Sidebar + topbar chrome (sRGB ~20): a clear step lighter than the content
        canvas so the shell chrome separates from the content area. */
-    --color-panel: oklch(19.13% 0 0);
+    --color-panel: #393939;
     /* Pure neutral (r=g=b). Were cool-tinted (#161618/#1c1c1e/#26262a, b>r),
        which clashed with the neutral panel ladder. */
-    --color-surface: oklch(20.02% 0 0);
-    --color-raised: oklch(22.64% 0 0);
-    --color-selected: oklch(26.86% 0 0);
+    --color-surface: #303030;
+    --color-raised: #414141;
+    --color-selected: #4a4a4a;
     --color-fg: oklch(96.12% 0 0);
     --color-fg-dim: oklch(76.99% 0 0);
     /* Tertiary text. Raised from #6e6e74 (3.78:1 on base, failed WCAG AA)
        to #7e7e84 so 13-14px text clears 4.5:1 on the dark surface ladder. */
     --color-fg-faint: oklch(59.31% 0 0);
-    --color-accent: oklch(49.65% 0.2709 289.33);
-    --color-accent-foreground: oklch(100.0% 0 0);
+    --color-accent: #e3c25a;
+    --color-accent-foreground: #393939;
     --color-hairline: oklch(100.0% 0 0 / 0.08);
     --color-nav-text: oklch(43.86% 0 0);
     --color-nav-muted: oklch(51.03% 0 0);
@@ -1375,8 +1376,8 @@ html:not(.dark) .application-console-shell[data-console-theme="system"] .termina
        every light surface above white. Dark stays 70.8% (already passes). */
     --coollabs-subtle: oklch(50% 0 0);
     /* Border of brand fills and the text on them. A custom theme overrides both. */
-    --color-brand-ring: #8a4dff;
-    --color-brand-foreground: #fff;
+    --color-brand-ring: #c5a344;
+    --color-brand-foreground: #393939;
 }
 
 .dark {
@@ -1385,24 +1386,24 @@ html:not(.dark) .application-console-shell[data-console-theme="system"] .termina
     --color-accent: var(--color-brand);
     /* Cards sit one step above the #0a0a0a canvas. The top bar uses the canvas,
        not this color. The sidebar uses --color-sidebar. */
-    --color-card: #121212;
-    --color-sidebar: #120e1a;
+    --color-card: #303030;
+    --color-sidebar: #393939;
     /* Dark surface ladder in hex (sRGB), not oklch: oklch lightness compresses
        to near-black below ~15%, so oklch(15%) rendered as sRGB 11 and cards
        could not lift off the content canvas (sRGB 10). These give clear,
        visible steps: content 10 -> elevated 22 -> base 28 -> recessed 34.
        Pure neutral (r=g=b), matching the neutral borders/text and the light
        ladder, so every panel shares one temperature (no blue cast). */
-    --color-app: oklch(14.48% 0 0);
-    --color-panel: oklch(19.13% 0 0);
+    --color-app: #242424;
+    --color-panel: #393939;
     --coollabs-canvas: var(--color-app);
     --coollabs-elevated: oklch(20.02% 0 0);
     --coollabs-recessed: oklch(25.2% 0 0);
     --coollabs-base: oklch(22.64% 0 0);
     --coollabs-fill: oklch(29.31% 0 0);
-    --color-surface: oklch(20.02% 0 0);
-    --color-raised: oklch(22.64% 0 0);
-    --color-selected: oklch(26.86% 0 0);
+    --color-surface: #303030;
+    --color-raised: #414141;
+    --color-selected: #4a4a4a;
     --color-log: oklch(15.91% 0 0);
     --coollabs-line: oklch(36% 0 0);
     /* Kept about 1.6:1 on the canvas so dark cards
@@ -1458,7 +1459,7 @@ html[data-theme="custom"] {
     --t-bg: var(--theme-bg);
     --t-text: var(--theme-text);
     --t-light: var(--theme-light);
-    --theme-base-color: oklch(49.65% 0.2709 289.33);
+    --theme-base-color: #e3c25a;
     --theme-bright-color: color-mix(in srgb, var(--theme-base-color) 85%, oklch(100% 0 0));
     --theme-scrollbar-thumb: color-mix(in srgb, var(--theme-bright-color) 70%, var(--theme-accent-foreground));
     /* Accent text and icons on the page. applyCustomTheme() computes a color with
@@ -6798,56 +6799,56 @@ html.dark .app-sidebar .menu-item:not(:hover):not(:focus-visible):not(.menu-item
    tiles, text, and edges. A custom theme keeps the neutral rules above. */
 html.dark:not([data-theme="custom"]) .app-sidebar nav.sidebar-nav,
 html.dark:not([data-theme="custom"]) .mobile-sidebar-sheet [role="dialog"] {
-    background-image: linear-gradient(180deg, rgb(107 22 237 / 0.09), transparent 520px);
-    border-right-color: rgb(163 145 255 / 0.10);
-    --color-nav-text: oklch(80% 0.02 300);
-    --color-nav-muted: oklch(58% 0.04 300);
+    background-image: linear-gradient(180deg, rgb(227 194 90 / 0.09), transparent 520px);
+    border-right-color: rgb(227 194 90 / 0.10);
+    --color-nav-text: #e0e0e0;
+    --color-nav-muted: #bdbdbd;
 }
 
 /* Same color as the top of the sidebar gradient, so the brand and sidebar read as one surface. */
 html.dark:not([data-theme="custom"]) .app-topbar-brand {
-    background-image: linear-gradient(rgb(107 22 237 / 0.09), rgb(107 22 237 / 0.09));
-    border-right-color: rgb(163 145 255 / 0.10);
+    background-image: linear-gradient(rgb(227 194 90 / 0.09), rgb(227 194 90 / 0.09));
+    border-right-color: rgb(227 194 90 / 0.10);
 }
 
 html.dark:not([data-theme="custom"]) :is(.app-sidebar, .mobile-sidebar-sheet) .menu-search {
-    background-color: rgb(163 145 255 / 0.06) !important;
-    box-shadow: inset 0 0 0 1px rgb(163 145 255 / 0.10) !important;
+    background-color: rgb(227 194 90 / 0.06) !important;
+    box-shadow: inset 0 0 0 1px rgb(227 194 90 / 0.10) !important;
 }
 
 html.dark:not([data-theme="custom"]) :is(.app-sidebar, .mobile-sidebar-sheet) .menu-search:hover {
-    background-color: rgb(163 145 255 / 0.10) !important;
+    background-color: rgb(227 194 90 / 0.10) !important;
 }
 
 html.dark:not([data-theme="custom"]) :is(.app-sidebar, .mobile-sidebar-sheet) .menu-search kbd {
-    border-color: rgb(163 145 255 / 0.18) !important;
+    border-color: rgb(227 194 90 / 0.18) !important;
 }
 
 /* Group dividers use the lavender sidebar edge: the neutral hairline looks olive on the purple-black sidebar. */
 html.dark:not([data-theme="custom"]) :is(.app-sidebar, .mobile-sidebar-sheet) .sidebar-nav :is([class~="dark:border-white/[0.06]"], [class~="dark:border-white/[0.07]"], [class~="dark:border-white/[0.08]"]) {
-    border-color: rgb(163 145 255 / 0.10) !important;
+    border-color: rgb(227 194 90 / 0.10) !important;
 }
 
 /* Admin keeps the neutral tile unless it is the current page. */
 html.dark:not([data-theme="custom"]):where(:not([data-nav-items="flat"])) :is(.app-sidebar, .mobile-sidebar-sheet) :is(.menu-item, .menu-subitem):not(.sidebar-toggle):not(.menu-search):not(.nav-admin):not(.menu-item-active):not(.menu-subitem-active) .menu-item-icon,
 html.dark:not([data-theme="custom"]):where(:not([data-nav-items="flat"])) .app-sidebar nav.sidebar-collapsed .menu-search.menu-item .menu-item-icon {
-    border-color: rgb(163 145 255 / 0.13);
-    background: rgb(107 22 237 / 0.07);
-    color: #b9adff;
+    border-color: rgb(227 194 90 / 0.13);
+    background: rgb(227 194 90 / 0.07);
+    color: #efd47c;
 }
 
 html.dark:not([data-theme="custom"]) :is(.app-sidebar, .mobile-sidebar-sheet) nav:not(.sidebar-collapsed) .nav-section {
-    color: rgb(163 145 255 / 0.55);
+    color: #d6c78e;
 }
 
 /* Sidebar account menu: the purple tint of the sidebar it opens from. */
 html.dark:not([data-theme="custom"]) .listbox-panel.top-user-menu-panel-sidebar {
     background: color-mix(in oklab, #6b16ed 10%, var(--coollabs-elevated));
-    border-color: rgb(163 145 255 / 0.22);
+    border-color: rgb(227 194 90 / 0.22);
 }
 
 html.dark:not([data-theme="custom"]) .top-user-menu-panel-sidebar .listbox-option:hover {
-    background: rgb(163 145 255 / 0.10);
+    background: rgb(227 194 90 / 0.10);
 }
 
 /* Custom theme sidebar. These rules come after the dark sidebar rules above, so they win. */

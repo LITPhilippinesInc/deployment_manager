@@ -1,3 +1,4 @@
+{{-- Modified for LIT Deployment Manager branding. --}}
 <!DOCTYPE html>
 <html data-theme="dark" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <script data-navigate-once>
@@ -12,7 +13,7 @@
             const hex = String(color ?? '').trim().replace(/^#/, '').toLowerCase();
             if (/^[a-f\d]{6}$/.test(hex)) return `#${hex}`;
             if (/^[a-f\d]{3}$/.test(hex)) return `#${hex.replace(/./g, '$&$&')}`;
-            return '#6b16ed';
+            return '#e3c25a';
         };
         const hexToOklab = (hex) => {
             const [r, g, b] = window.normalizeThemeColor(hex).match(/[a-f\d]{2}/gi).map((channel) => srgbToLinear(parseInt(channel, 16) / 255));
@@ -117,7 +118,7 @@
         window.customThemePresets = [
             // The built-in Dark theme, not a custom theme. Its colors start the fields when the user edits it. The sidebar is
             // the color that the Dark sidebar shows: #120e1a with its 9% purple wash.
-            { name: 'Coolify', theme: null, swatch: { sidebar: '#1a0f2d', selected: '#1c1c1c', accent: '#6b16ed', background: '#0a0a0a' } },
+            { name: 'LIT', theme: null, swatch: { sidebar: '#393939', selected: '#4a4a4a', accent: '#e3c25a', background: '#242424' } },
             { name: 'Midnight', theme: { sidebar: '#0f172a', selected: '#2e4a7d', accent: '#f2458f', background: '#1a2338' } },
             { name: 'Forest', theme: { sidebar: '#12342b', selected: '#2c6e57', accent: '#f4b860', background: '#1b2a25' } },
             { name: 'Ember', theme: { sidebar: '#3b1410', selected: '#8f2d1f', accent: '#ffb86b', background: '#241816' } },
@@ -376,19 +377,15 @@
     <meta name="robots" content="noindex">
     <meta name="theme-color" content="#101010" id="theme-color-meta" />
     <meta name="color-scheme" content="dark light" />
-    <meta name="Description" content="Coolify: An open-source & self-hostable Heroku / Netlify / Vercel alternative" />
+    <meta name="Description" content="LIT Deployment Manager: Self-hosted application and infrastructure management" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@coolifyio" />
-    <meta name="twitter:title" content="Coolify" />
-    <meta name="twitter:description" content="An open-source & self-hostable Heroku / Netlify / Vercel alternative." />
-    <meta name="twitter:image" content="https://cdn.coollabs.io/og-images/coolify.png" />
+    <meta name="twitter:title" content="LIT Deployment Manager" />
+    <meta name="twitter:description" content="Self-hosted application and infrastructure management." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://coolify.io" />
-    <meta property="og:title" content="Coolify" />
-    <meta property="og:description" content="An open-source & self-hostable Heroku / Netlify / Vercel alternative." />
-    <meta property="og:site_name" content="Coolify" />
-    <meta property="og:image" content="https://cdn.coollabs.io/og-images/coolify.png" />
+    <meta property="og:title" content="LIT Deployment Manager" />
+    <meta property="og:description" content="Self-hosted application and infrastructure management." />
+    <meta property="og:site_name" content="LIT Deployment Manager" />
     @use('App\Models\InstanceSettings')
     @php
 
@@ -403,16 +400,10 @@
             }
         }
     @endphp
-    <title>{{ $name }}{{ $title ?? 'Coolify' }}</title>
-    @env('local')
-        <link rel="icon" href="{{ asset('coolify-logo-dev-transparent.png') }}" type="image/png" />
-    @else
-        <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32" />
-        <link rel="icon" href="{{ asset('coolify-logo.svg') }}" type="image/svg+xml" />
-    @endenv
-    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}" />
+    <title>{{ $name }}{{ preg_replace('/\bCoolify\b/i', 'LIT Deployment Manager', (string) ($title ?? 'LIT Deployment Manager')) }}</title>
+    <link rel="icon" href="{{ asset('lit-brand.svg') }}" type="image/svg+xml" />
     <link rel="manifest" href="{{ asset('site.webmanifest') }}" />
-    <meta name="apple-mobile-web-app-title" content="Coolify" />
+    <meta name="apple-mobile-web-app-title" content="LIT Deployment Manager" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/js/app.js', 'resources/css/app.css'])
     <script>

@@ -121,6 +121,8 @@
                         ['label' => 'Monitoring', 'icon' => 'graph', 'children' => [
                             ['label' => 'Analytics', 'icon' => 'analytics', 'href' => route('analytics'), 'active' => request()->is('analytics'), 'visible' => $teamWide],
                             ['label' => 'Metrics', 'icon' => 'graph', 'href' => route('metrics'), 'active' => request()->is('metrics'), 'visible' => $teamWide],
+                            // LIT service health.
+                            ['label' => 'Service Health', 'icon' => 'graph', 'href' => route('service-health'), 'active' => request()->is('service-health*'), 'visible' => $teamWide],
                             // Members limited to some projects see the resources they have access to.
                             ['label' => 'Security', 'icon' => 'shield-alert', 'href' => route('vulnerabilities'), 'active' => request()->is('vulnerabilities')],
                         ]],

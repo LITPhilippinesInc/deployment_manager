@@ -5,6 +5,22 @@
 
     <x-notification.settings-layout>
     <div class="flex flex-col gap-6">
+        @if (auth()->user()->isAdminOfTeam($team->id) && auth()->user()->can('update',$settings))
+        <x-application.settings-section title="Notification Recipients">
+            <p class="text-sm text-neutral-500">Shared recipients for deployment, resource, server and external Service Health alerts. Select at least one valid team member.</p>
+            @foreach ($team->members()->get(['users.id','users.name','users.email']) as $member)
+                @php $eligible=\App\Services\LitHealthRecipients::eligible($member->email); @endphp
+                <label class="flex items-center gap-2 py-2" wire:key="shared-recipient-{{ $member->id }}">
+                    <input type="checkbox" wire:model="recipientIds" value="{{ $member->id }}" @disabled(!$eligible)>
+                    <span>{{ $member->name }} · {{ $member->email }} {{ $eligible ? '' : '(placeholder or invalid)' }}</span>
+                </label>
+            @endforeach
+            @error('recipientIds') <p class="text-warning">{{ $message }}</p> @enderror
+            @error('recipientIds.*') <p class="text-warning">{{ $message }}</p> @enderror
+            <button type="button" class="button" wire:click="saveRecipients">Save Recipients</button>
+            <p role="status">{{ $recipientMessage }}</p>
+        </x-application.settings-section>
+        @endif
         <form wire:submit="submit" class="application-settings-form">
             <x-unsaved-bar action="submit" />
             <x-application.settings-section title="Email delivery">

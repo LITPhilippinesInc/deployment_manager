@@ -223,6 +223,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('access.team-wide')->group(function () {
         Route::get('/dashboard/canvas', DashboardCanvas::class)->name('dashboard.canvas');
         Route::get('/analytics', Analytics::class)->name('analytics');
+        // LIT service health.
+        Route::get('/service-health', \App\Livewire\ServiceHealth::class)->name('service-health');
         Route::get('/metrics', FleetMetrics::class)->name('metrics');
         Route::get('/canvas', DeployCanvas::class)->name('deploy-canvas');
         Route::get('/canvas/tags', TagsCanvas::class)->name('tags.canvas');
